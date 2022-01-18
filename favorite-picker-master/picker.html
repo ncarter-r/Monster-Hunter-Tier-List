@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0">
+<title>Picker</title>
+<style>
+body {
+    background:#FFF;
+    color:#000;
+    font-family:verdana, sans-serif;
+    font-size:10pt;
+    margin:0;
+    padding:10px;
+}
+
+a:link, a:visited {
+    color:#008;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+a:active, a:hover {
+    color:#ACF;
+}
+
+.info {
+    font-weight:bold;
+}
+
+button {
+    font-family:inherit;
+    cursor:pointer;
+    border:0;
+    border-radius:3px;
+    padding:0.3em 0.5em;
+    background:#CCC;
+    color:#000;
+}
+
+button:hover {
+    background:#DDD;
+}
+
+button.disabled {
+    background:#DDD;
+    color:#888;
+    cursor:not-allowed;
+}
+
+button.disabled:hover {
+    background:#DDD;
+}
+
+#container {
+    position:relative;
+    margin-left:-10px;
+    margin-right:-10px;
+    padding:10px;
+    overflow:hidden;
+}
+
+@media (min-width:1024px) {
+    /* Put the found favorites beside the picking div when the window is sufficiently large */
+    #picking {
+        float:left;
+        width:636px;
+    }
+
+    #secondary {
+        margin-left:646px;
+    }
+}
+
+@media (min-width:1300px) {
+    /* Once we get to the point where 636px is less than half of the width of the screen, make the picking div just take up half */
+    #picking {
+        width:50%;
+    }
+
+    #secondary {
+        margin-left:51%;
+    }
+}
+
+#pick {
+    background:#58F;
+    color:#FFF;
+    font-size:larger;
+    font-weight:bold;
+    width:6em;
+    border-radius:5px;
+    margin-right:10px;
+}
+
+#pick.disabled {
+    background:#ACF;
+}
+
+#pick:hover {
+    background:#ACF;
+}
+
+.item-list {
+    padding:0;
+    list-style-type:none;
+    line-height:100px;
+}
+
+.item-list li {
+    margin:0;
+    display:inline-block;
+    height:100px;
+    width:100px;
+    line-height:100px;
+    border:3px solid transparent;
+    text-align:center;
+    position:relative;
+    vertical-align:top;
+    overflow:hidden;
+    border-radius:100%;
+    background:#F7F7F7;
+    color:#000;
+}
+
+.item-list li img {
+    vertical-align:middle;
+    max-height:100%;
+    max-width:100%;
+}
+
+.item-list li span {
+    display:inline-block;
+    vertical-align:middle;
+    line-height:1.2;
+}
+
+@media (max-width:636px) {
+    .item-list {
+        line-height:75px;
+    }
+
+    .item-list li {
+        line-height:75px;
+        height:75px;
+        width:75px;
+    }
+}
+
+@media (max-width:423px) {
+    .item-list {
+        line-height:50px;
+    }
+
+    .item-list li {
+        line-height:50px;
+        height:50px;
+        width:50px;
+    }
+}
+
+#evaluating li {
+    cursor:pointer;
+}
+
+#favorites li {
+    cursor:move;
+}
+
+.item-list li:hover {
+    background:#CDF;
+}
+
+.item-list.sorting li:hover {
+    background:#F7F7F7;
+}
+
+#evaluating li.selected {
+    border:3px solid #7AC;
+}
+
+#evaluating, #buttons {
+    text-align:center;
+    margin:auto;
+}
+
+#evaluating li.notice {
+    width:auto;
+    height:auto;
+    max-width:260px;
+    margin:auto;
+    background:#F7F7F7;
+    border-radius:10px;
+    padding:30px 30px;
+    color:#000;
+    text-align:center;
+    line-height:1.4;
+    cursor:auto;
+    font-size:10pt;
+}
+
+#buttons {
+    margin-top:30px;
+    position:relative;
+    z-index:3;
+}
+</style>
+</head>
+<body>
+<h1>Picker</h1>
+
+<p>You can include any content you want here.</p>
+
+<div id="container">
+
+<div id="picking">
+<ul id="evaluating" class="item-list">
+</ul>
+
+<p id="buttons"><button id="pick">Pick</button> <button id="pass">Pass</button> <button id="undo">Undo</button> <button id="redo">Redo</button></p>
+</div>
+
+<div id="secondary">
+<h2>Found favorites</h2>
+
+<ol id="favorites" class="item-list">
+</ol>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="picker.js"></script>
+<script src="picker-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.7.0/Sortable.min.js"></script>
+<script>
+'use strict';
+
+var items = [
+    // Define your items here
+    {id: 'Agnaktor', name: 'Agnaktor', image: 'agnaktor.png'},
+    {id: 'Ahtal-Ka', name: 'Ahtal-Ka', image: 'ahtal-ka.png'},
+    {id: 'Akantor', name: 'Akantor', image: 'akantor.png'},
+    {id: 'Aknosom', name: 'Aknosom', image: 'aknosom.png'},
+    {id: 'Alatreon', name: 'Alatreon', image: 'alatreon.png'},
+    {id: 'Almudron', name: 'Almudron', image: 'almudron.png'},
+    {id: 'Amatsu', name: 'Amatsu', image: 'amatsu.png'},
+    {id: 'Anjanath', name: 'Anjanath', image: 'anjanath.png'},
+    {id: 'Arzuros', name: 'Arzuros', image: 'arzuros.png'},
+    {id: 'Astalos', name: 'Astalos', image: 'astalos.png'},
+    {id: 'Banbaro', name: 'Banbaro', image: 'banbaro.png'},
+    {id: 'Barioth', name: 'Barioth', image: 'barioth.png'},
+    {id: 'Barroth', name: 'Barroth', image: 'barroth.png'},
+    {id: 'Basarios', name: 'Basarios', image: 'basarios.png'},
+    {id: 'Bazelgeuse', name: 'Bazelgeuse', image: 'bazelgeuse.png'},
+    {id: 'Beotodus', name: 'Beotodus', image: 'beotodus.png'},
+    {id: 'Bishaten', name: 'Bishaten', image: 'bishaten.png'},
+    {id: 'Blangonga', name: 'Blangonga', image: 'blangonga.png'},
+    {id: 'Brachydios', name: 'Brachydios', image: 'brachydios.png'},
+    {id: 'Bulldrome', name: 'Bulldrome', image: 'bulldrome.png'},
+    {id: 'Ceadeus', name: 'Ceadeus', image: 'ceadeus.png'},
+    {id: 'Cephadrome', name: 'Cephadrome', image: 'caphadrome.png'},
+    {id: 'Chameleos', name: 'Chameleos', image: 'chameleos.png'},
+    {id: 'Congalala', name: 'Congalala', image: 'congalala.png'},
+    {id: 'Dahren Mohran', name: 'Dahren Mohran', image: 'dahren_mohran.png'},
+    {id: 'Daimyo Hermitaur', name: 'Daimyo Hermitaur', image: 'daimyo_hermitaur.png'},
+    {id: 'Dalamadur', name: 'Dalamadur', image: 'dalamadur.png'},
+    {id: 'Deviljho', name: 'Deviljho', image: 'deviljho.png'},
+    {id: 'Diablos', name: 'Diablos', image: 'diablos.png'},
+    {id: 'Dire Miralis', name: 'Dire Miralis', image: 'fuck_you_dire_miralis.png'},
+    {id: 'Dodogama', name: 'Dodogama', image: 'dodogama.png'},
+    {id: 'Duramboros', name: 'Duramboros', image: 'duramboros.png'},
+    {id: 'Fatalis', name: 'Fatalis', image: 'fatalis.png'},
+    {id: 'Gammoth', name: 'Gammoth', image: 'gammoth.png'},
+    {id: 'Gendrome', name: 'Gendrome', image: 'gendrome.png'},
+    {id: 'Giadrome', name: 'Giadrome', image: 'giadrome.png'},
+    {id: 'Gigginox', name: 'Gigginox', image: 'gigginox.png'},
+    {id: 'Glavenus', name: 'Glavenus', image: 'glavenus.png'},
+    {id: 'Gobul', name: 'Gobul', image: 'gobul.png'},
+    {id: 'Gogmazios', name: 'Gogmazios', image: 'fuck_you_too_gogmazios.png'},
+    {id: 'Gore Magala', name: 'Gore Magala', image: 'gore_magala.png'},
+    {id: 'Goss Harag', name: 'Goss Harag', image: 'goss_harag.png'},
+    {id: 'Gravios', name: 'Gravios', image: 'gravios.png'},
+    {id: 'Great Baggi', name: 'Great Baggi', image: 'great_baggi.png'},
+    {id: 'Great Girros', name: 'Great Girros', image: 'great_girros.png'},
+    {id: 'Great Izuchi', name: 'Great Izuchi', image: 'great_izuchi.png'},
+    {id: 'Great Jaggi', name: 'Great Jaggi', image: 'great_jaggi.png'},
+    {id: 'Great Jagras', name: 'Great Jagras', image: 'great_jagras.png'},
+    {id: 'Great Maccao', name: 'Great Maccao', image: 'great_maccao.png'},
+    {id: 'Great Wroggi', name: 'Great Wroggi', image: 'great_wroggi.png'},
+    {id: 'Gypceros', name: 'Gypceros', image: 'gypceros.png'},
+    {id: 'Hypnocatrice', name: 'Hypnocatrice', image: 'hypnocatrice.png'},
+    {id: 'Ibushi', name: 'Ibushi', image: 'ibushi.png'},
+    {id: 'Iodrome', name: 'Iodrome', image: 'iodrome.png'},
+    {id: 'Jhen Mohran', name: 'Jhen Mohran', image: 'jhen_mohran.png'},
+    {id: 'Jyuratodus', name: 'Jyuratodus', image: 'jyuratodus.png'},
+    {id: 'Kecha Wacha', name: 'Kecha Wacha', image: 'kecha_wacha.png'},
+    {id: 'Khezu', name: 'Khezu', image: 'khezu.png'},
+    {id: 'King Shakalaka', name: 'King Shakalaka', image: 'king_shakalaka.png'},
+    {id: 'Kirin', name: 'Kirin', image: 'kirin.png'},
+    {id: 'Kulu-Ya-Ku', name: 'Kulu-Ya-Ku', image: 'kulu-ya-ku.png'},
+    {id: 'Kulve Taroth', name: 'Kulve Taroth', image: 'kulve_taroth.png'},
+    {id: 'Kushala Daora', name: 'Kushala Daora', image: 'kushala_daora.png'},
+    {id: 'Lagiacrus', name: 'Lagiacrus', image: 'lagiacrus.png'},
+    {id: 'Lagombi', name: 'Lagombi', image: 'lagombi.png'},
+    {id: 'Lao-Shan Lung', name: 'Lao-Shan Lung', image: 'lao-shang_lung.png'},
+    {id: 'Lavasioth', name: 'Lavasioth', image: 'lavasioth.png'},
+    {id: 'Legiana', name: 'Legiana', image: 'legiana.png'},
+    {id: 'Lunastra', name: 'Lunastra', image: 'lunastra.png'},
+    {id: 'Magnamalo', name: 'Magnamalo', image: 'magnamalo.png'},
+    {id: 'Malfestio', name: 'Malfestio', image: 'malfestio.png'},
+    {id: 'Misutzune', name: 'Misutzune', image: 'mizutsune.png'},
+    {id: 'Monoblos', name: 'Monoblos', image: 'monoblos.png'},
+    {id: 'Najarala', name: 'Najarala', image: 'najarala.png'},
+    {id: 'Nakarkos', name: 'Nakarkos', image: 'nakarkos.png'},
+    {id: 'Namielle', name: 'Namielle', image: 'namielle.png'},
+    {id: 'Nargacuga', name: 'Nargacuga', image: 'nargacuga.png'},
+    {id: 'Narwa', name: 'Narwa', image: 'narwa.png'},
+    {id: 'Nergigante', name: 'Nergigante', image: 'nergigante.png'},
+    {id: 'Nerscylla', name: 'Nerscylla', image: 'nerscylla.png'},
+    {id: 'Nibelsnarf', name: 'Nibelsnarf', image: 'niblesnarf.png'},
+    {id: 'Odogaron', name: 'Odogaron', image: 'odogaron.png'},
+    {id: 'Paolumu', name: 'Paolumu', image: 'paolumu.png'},
+    {id: 'Plesioth', name: 'Plesioth', image: 'plesioth.png'},
+    {id: 'Pukei-Pukei', name: 'Pukei-Pukei', image: 'pukei-pukei.png'},
+    {id: 'Qurupeco', name: 'Qurupeco', image: 'qurupeco.png'},
+    {id: 'Rabodaan', name: 'Rabodaan', image: 'radobaan.png'},
+    {id: 'Rajang', name: 'Rajang', image: 'rajang.png'},
+    {id: 'Rakna-Kadaki', name: 'Rakna-Kadaki', image: 'rakna-kadaki.png'},
+    {id: 'Rathalos', name: 'Rathalos', image: 'rathalos.png'},
+    {id: 'Rathian', name: 'Rathian', image: 'Rathian.png'},
+    {id: 'Royal Ludroth', name: 'Royal Ludroth', image: 'royal_ludroth.png'},
+    {id: 'Safijiva', name: 'Safijiva', image: 'safijiva.png'},
+    {id: 'Seltas', name: 'Seltas', image: 'seltas.png'},
+    {id: 'Seltas Queen', name: 'Seltas Queen', image: 'seltas_queen.png'},
+    {id: 'Seregios', name: 'Seregios', image: 'seregios.png'},
+    {id: 'Shagaru Magala', name: 'Shagaru Magala', image: 'shagaru_magala.png'},
+    {id: 'Shara Ishvalda', name: 'Shara Ishvalda', image: 'shara_ishvalda.png'},
+    {id: 'Shen Gaoren', name: 'Shen Gaoren', image: 'shen_garoen.png'},
+    {id: 'Shogun Ceanataur', name: 'Shogun Ceanataur', image: 'shogun_cenataur.png'},
+    {id: 'Somnacanth', name: 'Somnacanth', image: 'somnacanth.png'},
+    {id: 'Teostra', name: 'Teostra', image: 'teostra.png'},
+    {id: 'Tetranadon', name: 'Tetranadon', image: 'tetranadon.png'},
+    {id: 'Tetsucabra', name: 'Tetsucabra', image: 'tetsucabra.png'},
+    {id: 'Tigrex', name: 'Tigrex', image: 'tigrex.png'},
+    {id: 'Tobi-Kadachi', name: 'Tobi-Kadachi', image: 'tobi-kadachi.png'},
+    {id: 'Tzitzi-Ya-Ku', name: 'Tzitzi-Ya-Ku', image: 'tzitzi-ya-ku.png'},
+    {id: 'Ukanlos', name: 'Ukanlos', image: 'ukanlos.png'},
+    {id: 'Uragaan', name: 'Uragaan', image: 'uragaan.png'},
+    {id: 'Vaal Hazak', name: 'Vaal Hazak', image: 'vaal_hazak.png'},
+    {id: 'Valstrax', name: 'Valstrax', image: 'valstrax.png'},
+    {id: 'Velkhana', name: 'Velkhana', image: 'valkhana.png'},
+    {id: 'Velocidrome', name: 'Velocidrome', image: 'velocidrome.png'},
+    {id: 'Vespiod Queen', name: 'Vespiod Queen', image: 'vespoid_queen.png'},
+    {id: 'Volvidon', name: 'Volvidon', image: 'volvidon.png'},
+    {id: 'Xenojiva', name: 'Xenojiva', image: 'xenojiva.png'},
+    {id: 'Yama Tsukami', name: 'Yama Tsukami', image: 'yama_tsukami.png'},
+    {id: 'Yian Garuga', name: 'Yian Garuga', image: 'yian_garuga.png'},
+    {id: 'Yian Kut-Ku', name: 'Yian Kut-Ku', image: 'yian_kut_ku.png'},
+    {id: 'Zamtrios', name: 'Zamtrios', image: 'zamtrios.png'},
+    {id: 'Zinogre', name: 'Zinogre', image: 'zinogre.png'},
+    {id: 'Zorah Magdaros', name: 'Zorah Magdaros', image: 'zorah_magdaros.png'}
+];
+
+var myPicker = new picker.Picker({
+    items: items
+});
+
+var pickerUI = new PickerUI(myPicker, {
+    elements: {
+        pick: "#pick",
+        pass: "#pass",
+        undo: "#undo",
+        redo: "#redo",
+        evaluating: "#evaluating",
+        favorites: "#favorites"
+    }
+});
+
+pickerUI.initialize();
+
+/* Sortable favorites - you can safely remove this, and the Sortable.min.js script, if you don't want to be able to sort your favorite list. */
+var sortable = new Sortable(pickerUI.elem.favorites.get(0), {
+    draggable: '.item',
+    animation: 100,
+    onStart: function() {
+        pickerUI.elem.favorites.addClass("sorting");
+    },
+    onEnd: function() {
+        pickerUI.elem.favorites.removeClass("sorting");
+    },
+    onUpdate: function() {
+        myPicker.setFavorites(pickerUI.elem.favorites.children().map(function() {
+            return pickerUI.getItem(this);
+        }).get());
+        pickerUI.update(true);
+    }
+});
+/* End sortable favorites */
+</script>
+</body>
+</html>
